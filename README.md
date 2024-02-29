@@ -1,3 +1,16 @@
+## API请求说明
+> 为API部署方式添加了以QQ头像为图片的GET请求方式
+> 开启web服务器后，所有表情列表和所需内容可以参考http://127.0.0.1:2233/info
+#  <span style="color:orange">GET</span>$~~~~$  /[key]/
+| 请求地址 | 请求方式 |必选参数| 可选参数(类型) 默认值 | 请求示例 |
+| ------------ | ------------ | ------------ | ------------ | ------------ | 
+| /{key} | GET |`qq` **List(str)**|`circle` **(bool)** =False<br>`default` **(bool)** = False<br>`ratio`: **int** = 2<br>`number`: **int** = 0<br>`black`: **bool** = False<br>`person`: **bool** = False<br>`direction`: **str** = 'left'<br>`position`: **str** = 'left'<br>`time`: **str** = ''<br>`mode`: **str** = 'normal'<br>`name`: **str** = '' <br>`texts`: **List(str)**| `域名/fencing/?qq=xxxxxx&qq=xxxxxx`<br><br> `域名/petpet/?qq=xxxxxx&circle=True`
+
+## Docker快速部署
+`docker run -d -p 2233:2233 monthwolf/meme-generator:latest`
+更多内容查看   [--> Docker部署 <--](docs/docker.md)
+<br><br><br><br>
+***
 <div align="center">
 
 <img src="https://s2.loli.net/2023/03/26/4URd1BKj3ToycLl.png" width=200 />
@@ -23,6 +36,8 @@ _✨ 表情包生成器，用于制作各种沙雕表情包 ✨_
 >
 > 额外表情仓库：[meme-generator-contrib](https://github.com/MeetWq/meme-generator-contrib)
 
+
+
 ## 表情列表
 
 表情详细信息、表情预览等可以在 [--> 表情列表 <--](docs/memes.md) 查看
@@ -33,9 +48,6 @@ _✨ 表情包生成器，用于制作各种沙雕表情包 ✨_
 
 本地安装、图片下载、字体安装方式等可以在 [--> 本地安装 <--](docs/install.md) 查看
 
-### Docker
-
-Docker 部署方式可以在 [--> Docker部署 <--](docs/docker.md) 查看
 
 ## 使用
 
