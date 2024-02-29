@@ -1,9 +1,11 @@
 from typing import Any, Dict, List, Literal, Optional, Tuple
 
 import filetype
-from fastapi import Depends, FastAPI, Form, HTTPException, Response, UploadFile
+import requests
+from fastapi import Depends, FastAPI, Form, HTTPException, Response, UploadFile,Query
+from fastapi.staticfiles import StaticFiles
 from pil_utils.types import ColorType, FontStyle, FontWeight
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel,  ValidationError
 
 from meme_generator.config import meme_config
 from meme_generator.exception import MemeGeneratorException, NoSuchMeme
@@ -13,7 +15,7 @@ from meme_generator.meme import Meme, MemeArgsModel
 from meme_generator.utils import TextProperties, render_meme_list
 
 app = FastAPI()
-
+app.mount("/info", StaticFiles(directory="static",html=True), name="static")
 
 class MemeArgsResponse(BaseModel):
     name: str
@@ -70,6 +72,7 @@ def register_router(meme: Meme):
 
         try:
             result = await meme(images=imgs, texts=texts, args=args.dict())
+            print(result)
         except MemeGeneratorException as e:
             raise HTTPException(status_code=e.status_code, detail=str(e))
 
@@ -77,6 +80,64 @@ def register_router(meme: Meme):
         media_type = str(filetype.guess_mime(content)) or "text/plain"
         return Response(content=content, media_type=media_type)
 
+    @app.get(f"/{meme.key}/")
+    async def _(
+            qq:List[str]=Query([]),
+            texts: List[str] = Query(meme.params_type.default_texts),
+            circle: bool = Query(False),
+            default: bool = Query(False),
+            ratio: int = Query(2),
+            number: int = Query(0),
+            black: bool = Query(False),
+            person: bool = Query(False),
+            direction: str = Query('left'),
+            position: str = Query('left'),
+            time: str = Query(''),
+            mode: str = Query('normal'),
+            name: str = Query(''),
+            args: args_model = Depends(args_checker),  # type: ignore
+    ):
+        imgs: List[bytes] = []
+        if 'circle' in args.model_dump():
+            args.circle=circle
+        if 'ratio' in args.model_dump():
+            args.ratio=ratio
+        if 'number' in args.model_dump():
+            args.number=number
+        if 'default' in args.model_dump():
+            args.default=default
+        if 'black' in args.model_dump():
+            args.black=black
+        if 'person' in args.model_dump():
+            args.person=person
+        if 'direction' in args.model_dump():
+            args.direction=direction
+        if 'position' in args.model_dump():
+            args.position=position
+        if 'time' in args.model_dump():
+            args.time=time
+        if 'mode' in args.model_dump():
+            args.mode=mode
+        if 'name' in args.model_dump():
+            args.name=name
+        for q in qq:
+            q="http://q.qlogo.cn/headimg_dl?spec=640&img_type=jpg&dst_uin="+q
+            q=requests.get(q)
+            print(q.content)
+            imgs.append(q.content)
+        texts = [text for text in texts if text]
+
+        assert isinstance(args, args_model)
+
+        try:
+            result = await meme(images=imgs, texts=texts, args=args.dict())
+            print(result)
+        except MemeGeneratorException as e:
+            raise HTTPException(status_code=e.status_code, detail=str(e))
+
+        content = result.getvalue()
+        media_type = str(filetype.guess_mime(content)) or "text/plain"
+        return Response(content=content, media_type=media_type)
 
 class MemeKeyWithProperties(BaseModel):
     meme_key: str
@@ -159,7 +220,7 @@ def register_routers():
             else MemeArgsModel
         )
         properties: Dict[str, Dict[str, Any]] = (
-            args_model.schema().get("properties", {}).copy()
+            args_model.model_json_schema().get("properties", {}).copy()
         )
         properties.pop("user_infos")
         return MemeInfoResponse(
